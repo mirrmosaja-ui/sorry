@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>For You</title>
+<style>
+:root{
+  --site-primary:#f44336;
+  --site-secondary:#4caf50;
+  --site-background:#000000;
+  --site-on-primary:#ffffff;
+  --site-on-secondary:#ffffff;
+  --site-on-background:#ffffff;
+  --site-font-body:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --site-font-heading:var(--site-font-body);
+  --site-heading-scale:1;
+  --site-spacing-scale:1;
+  --site-radius-scale:1;
+  --site-decoration-opacity:1;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  min-height:100svh;
+  background:var(--site-background);
+  color:var(--site-on-background);
+  font-family:var(--site-font-body);
+}
+#app{
+  min-height:100svh;
+  background:var(--site-background);
+  color:var(--site-on-background);
+  display:flex;
+  flex-direction:column;
+  text-align:center;
+}
+main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:calc(12px * var(--site-spacing-scale));
+  padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));
+}
+h1,h2{font-family:var(--site-font-heading)}
+.title{font-size:calc(clamp(20px,4.5vw,36px)*var(--site-heading-scale));margin:0}
+.subtitle{font-size:calc(clamp(18px,4vw,28px)*var(--site-heading-scale));margin:6px 0 0}
+.hero{
+  width:min(520px,85vw);
+  max-height:35vh;
+  object-fit:contain;
+  display:block;
+  margin:8px auto 0;
+  border-radius:calc(8px * var(--site-radius-scale));
+}
+.buttons{
+  position:relative;
+  width:min(520px,92vw);
+  height:clamp(220px,42vh,380px);
+  margin-top:8px;
+  border:1px dashed rgba(255,255,255,.18);
+  border-radius:calc(14px * var(--site-radius-scale));
+  overflow:hidden;
+  touch-action:none;
+}
+.button{
+  border:0;
+  color:#fff;
+  padding:14px 24px;
+  font-size:clamp(16px,4vw,20px);
+  cursor:pointer;
+  border-radius:calc(10px * var(--site-radius-scale));
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+.button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.button1{background:var(--site-primary)}
+.button2{background:var(--site-secondary)}
+#btnYes{position:absolute;left:10px;bottom:10px;z-index:1}
+#Bn{position:absolute;left:16px;top:16px;transition:left 220ms ease,top 220ms ease;z-index:2}
+footer{
+  width:100%;
+  text-align:center;
+  font-size:14px;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+  opacity:.9;
+}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);
+  display:none;align-items:center;justify-content:center;
+  z-index:10;padding:16px;
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  position:relative;width:min(520px,100%);
+  background:#fff;color:#333;border-radius:12px;
+  overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.5);
+}
+.modal-content{position:relative;padding:24px 20px 18px}
+.modal h3{margin:0 0 24px;font-size:22px;line-height:1.35}
+.close-btn{
+  position:absolute;right:10px;top:8px;border:0;background:transparent;
+  font-size:30px;line-height:1;color:#666;cursor:pointer
+}
+.modal-footer{text-align:right}
+.modal-footer button{
+  border:1px solid #ccc;background:#f5f5f5;color:#333;
+  border-radius:6px;padding:8px 14px;cursor:pointer
+}
+.confetti-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+@media(max-width:576px){
+  .modal{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <h1 class="title">Kamu masih marah ya?</h1>
+
+  <!-- Ganti URL gambar di bawah jika ingin memakai gambar/GIF sendiri -->
+  <div class="hero" aria-label="Ngambek" style="font-size:72px">🥺</div>
+
+  <h2 class="subtitle">Maafin aku yaa...</h2>
+
+  <section class="buttons" aria-label="Area tombol">
+    <button id="btnYes" class="button button2" type="button">IYA</button>
+    <button id="Bn" class="button button1" type="button">GA</button>
+  </section>
+</main>
+
+<footer>Total kunjungan: 23843</footer>
+
+<div class="modal-backdrop" id="myModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <canvas id="confettiModal" class="confetti-canvas"></canvas>
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal" aria-label="Tutup">&times;</button>
+      <h3 id="modalTitle">Makasih ya udah mau maafin aku....</h3>
+      <div class="modal-footer"><button id="closeModal2">Tutup</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const wrap=document.querySelector('.buttons');
+const bn=document.getElementById('Bn');
+const modal=document.getElementById('myModal');
+let last={x:16,y:16};
+
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function bounds(){
+  const w=Math.max(wrap.clientWidth,200),h=Math.max(wrap.clientHeight,160);
+  const bw=Math.max(bn.offsetWidth,80),bh=Math.max(bn.offsetHeight,40);
+  return {maxLeft:Math.max(8,w-bw-8),maxTop:Math.max(8,h-bh-8)};
+}
+function moveBn(){
+  const b=bounds();let nx,ny,tries=0;
+  do{
+    nx=Math.random()*Math.max(1,b.maxLeft-8)+8;
+    ny=Math.random()*Math.max(1,b.maxTop-8)+8;
+    tries++;
+  }while(Math.hypot(nx-last.x,ny-last.y)<64 && tries<24);
+  last.x=clamp(nx,8,b.maxLeft);last.y=clamp(ny,8,b.maxTop);
+  bn.style.left=last.x+'px';bn.style.top=last.y+'px';
+}
+function centerInit(){
+  const b=bounds();
+  last.x=Math.floor(b.maxLeft/2);last.y=Math.floor(b.maxTop/2);
+  bn.style.left=last.x+'px';bn.style.top=last.y+'px';
+}
+function showModal(){
+  modal.classList.add('show');
+  burstConfetti();
+}
+function hideModal(){modal.classList.remove('show')}
+document.getElementById('btnYes').addEventListener('click',showModal);
+document.getElementById('closeModal').addEventListener('click',hideModal);
+document.getElementById('closeModal2').addEventListener('click',hideModal);
+modal.addEventListener('click',e=>{if(e.target===modal)hideModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hideModal()});
+
+function playError(){
+  if(navigator.vibrate)navigator.vibrate(40);
+}
+function runAway(e){
+  e.preventDefault();playError();moveBn();
+}
+bn.addEventListener('pointerdown',runAway,{passive:false});
+bn.addEventListener('touchstart',runAway,{passive:false});
+bn.addEventListener('mouseover',moveBn);
+
+const canvas=document.getElementById('confettiModal'),ctx=canvas.getContext('2d');
+let pieces=[];
+function resizeCanvas(){
+  const r=canvas.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);
+}
+function burstConfetti(){
+  resizeCanvas();pieces=[];
+  for(let i=0;i<120;i++){
+    pieces.push({
+      x:canvas.clientWidth/2,y:canvas.clientHeight*.18,
+      vx:(Math.random()-.5)*9,vy:Math.random()*-5-2,
+      g:.13+Math.random()*.08,size:4+Math.random()*6,
+      life:70+Math.random()*35,rot:Math.random()*6.28
+    });
+  }
+  animateConfetti();
+}
+let animating=false;
+function animateConfetti(){
+  if(animating)return;animating=true;
+  function frame(){
+    ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+    let alive=false;
+    for(const p of pieces){
+      if(p.life<=0)continue;
+      alive=true;p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.rot+=.12;p.life--;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=`hsl(${Math.random()*360},85%,60%)`;
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);ctx.restore();
+    }
+    if(alive)requestAnimationFrame(frame);else{animating=false;ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight)}
+  }
+  frame();
+}
+window.addEventListener('load',()=>{centerInit();setTimeout(moveBn,120)});
+window.addEventListener('resize',centerInit);
+</script>
+</body>
+</html>
